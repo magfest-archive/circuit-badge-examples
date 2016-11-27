@@ -64,7 +64,6 @@ class ExampleGame(ApplicationSession):
             print("Player {} has left the game!".format(player.name))
             del self.badge_map[badge_id]
 
-
     @wamp.register(u'badge.button.depress')
     def button_down(self, badge, button):
         player = self.get_player(badge)
