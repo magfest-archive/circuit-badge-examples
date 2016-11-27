@@ -23,11 +23,11 @@ class Player:
         self.badge = badge_id
         self.position = Position(0, 0)
         self.health = 100
-        self.name = name
+        self._name = name
 
     @property
     def name(self):
-        return self.name or str(self.badge)
+        return self._name or str(self.badge)
 
     def hurt(self, amt=1):
         self.health -= amt
