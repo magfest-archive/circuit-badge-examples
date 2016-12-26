@@ -24,6 +24,15 @@ class Player:
         self.position = Position(0, 0)
         self.health = 100
         self._name = name
+        self.lights = [(0xff, 0, 0), (0, 0xff, 0), (0, 0, 0xff), (0xff, 0xff, 0xff)]
+
+    async def cycle_lights(self):
+        self.lights = self.lights[1:] + self.lights[:1]
+
+        await asyncio.gather(
+            *(self.call(u'badge.led.set_one', self.badge, i, list(color)) \
+              for i, color in enumerate(self.lights))
+        )
 
     @property
     def name(self):
@@ -41,8 +50,17 @@ class Player:
 
 class ExampleGame(ApplicationSession):
     def __init__(self, component_config, *_, **__):
+        super().__init__()
         #: Maps Badge# => Player
         self.badge_map = {}
+
+    async def onJoin(self, details):
+        results = await self.register(self)
+        for res in results:
+            if isinstance(res, wamp.protocol.Registration):
+                continue
+            else:
+                print("Error registering!")
 
     def get_player(self, badge):
         return self.badge_map.get(badge, None)
@@ -53,12 +71,12 @@ class ExampleGame(ApplicationSession):
         print("Press {} to join!".format((" ".join((button.title() if isinstance(button, str) else ('+'.join((b.title() for b in button)) + ', ') for button in code)))))
 
     @wamp.register(u'game.player.join')
-    def onjoin(self, badge_id):
+    def player_join(self, badge_id):
         self.badge_map[badge_id] = Player(badge_id)
         print("Badge #{} has entered the game!".format(badge_id))
 
     @wamp.register(u'game.player.leave')
-    def onleave(self, badge_id):
+    def player_leave(self, badge_id):
         player = self.get_player(badge_id)
         if player:
             print("Player {} has left the game!".format(player.name))
